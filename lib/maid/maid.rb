@@ -5,7 +5,11 @@ require 'logger'
 class Maid::Maid
   DEFAULTS = {
     :progname     => 'Maid',
+
     :log_device   => File.expand_path('~/.maid/maid.log'),
+    :log_shift_age  => 5,
+    :log_shift_size => 1048576, # 1 MB
+
     :rules_path   => File.expand_path('~/.maid/rules.rb'),
     :trash_path   => File.expand_path('~/.Trash'),
     :file_options => {:noop => false}, # for FileUtils
@@ -26,7 +30,7 @@ class Maid::Maid
     @log_device = options[:log_device]
     FileUtils.mkdir_p(File.dirname(@log_device)) unless @log_device.kind_of?(IO)
 
-    @logger = Logger.new(@log_device, 5, 1048576)
+    @logger = Logger.new(@log_device, options[:log_shift_age], options[:log_shift_size])
     @logger.progname  = options[:progname]
     @logger.formatter = options[:log_formatter] if options[:log_formatter]
 
