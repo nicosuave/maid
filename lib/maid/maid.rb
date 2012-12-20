@@ -94,6 +94,10 @@ class Maid::Maid
   # Run a shell command.
   #--
   # Delegates to `Kernel.\``.  Made primarily for testing other commands and some error handling.
+  #
+  # TODO: possibly allow Rails-like escaping rather than depending on shellescaping elsewhere.
+  #
+  #     cmd('program ? --option=?', ['foo', 'bar'])
   def cmd(command) #:nodoc:
     if supported_command?(command)
       %x(#{ command })
