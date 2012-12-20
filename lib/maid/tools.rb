@@ -1,6 +1,7 @@
 require 'fileutils'
 require 'find'
 require 'time'
+require 'shellwords'
 
 # These "tools" are methods available in the Maid DSL.
 #
@@ -413,7 +414,7 @@ module Maid::Tools
   end
 
   def sh_escape(string)
-    string.inspect
+    Shellwords.shellescape(string)
   end
 
   def expand(path)
