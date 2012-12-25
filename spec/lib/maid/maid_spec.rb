@@ -195,6 +195,10 @@ module Maid
       it 'should report `echo` as a real command' do
         lambda { @maid.cmd('echo .') }.should_not raise_error(ArgumentError)
       end
+
+      it 'should report `echo` as a real command when used in an array' do
+        lambda { @maid.cmd('echo', '.') }.should_not raise_error(ArgumentError)
+      end
     end
   end
 end

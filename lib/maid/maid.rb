@@ -92,17 +92,18 @@ class Maid::Maid
   end
 
   # Run a shell command.
+  #
+  # Arguments are escaped safely.
   #--
   # Delegates to `Kernel.\``.  Made primarily for testing other commands and some error handling.
-  #
-  # TODO: possibly allow Rails-like escaping rather than depending on shellescaping elsewhere.
-  #
-  #     cmd('program ? --option=?', ['foo', 'bar'])
-  def cmd(command) #:nodoc:
-    if supported_command?(command)
-      %x(#{ command })
+  def cmd(*ary) #:nodoc:
+    first = ary.first
+
+    if supported_command?(first)
+      escaped = Escape.shell_command(ary.flatten)
+      Kernel.send(:`, escaped)
     else
-      raise ArgumentError, "Unsupported system command: #{ command.inspect }"
+      raise ArgumentError, "Unsupported system command: #{ first.inspect }"
     end
   end
 

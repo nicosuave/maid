@@ -1,7 +1,6 @@
 require 'fileutils'
 require 'find'
 require 'time'
-require 'shellwords'
 
 # These "tools" are methods available in the Maid DSL.
 #
@@ -240,7 +239,7 @@ module Maid::Tools
   #
   #     locate('foo.zip') # => ['/a/foo.zip', '/b/foo.zip']
   def locate(name)
-    cmd("mdfind -name #{ sh_escape(name) }").split("\n")
+    cmd('mdfind', '-name', name).split("\n")
   end
 
   # [Mac OS X] Use Spotlight metadata to determine the site from which a file was downloaded.
@@ -249,7 +248,7 @@ module Maid::Tools
   #
   #     downloaded_from('foo.zip') # => ['http://www.site.com/foo.zip', 'http://www.site.com/']
   def downloaded_from(path)
-    raw = cmd("mdls -raw -name kMDItemWhereFroms #{ sh_escape(path) }")
+    raw = cmd('mdls -raw -name kMDItemWhereFroms', path)
     clean = raw[1, raw.length - 2]
     clean.split(/,\s+/).map { |s| t = s.strip; t[1, t.length - 2] }
   end
@@ -260,7 +259,7 @@ module Maid::Tools
   #
   #     duration_s('foo.mp3') # => 235.705
   def duration_s(path)
-    cmd("mdls -raw -name kMDItemDurationSeconds #{ sh_escape(path) }").to_f
+    cmd('mdls -raw -name kMDItemDurationSeconds', path).to_f
   end
 
   # List the contents of a zip file.
@@ -269,7 +268,7 @@ module Maid::Tools
   #
   #     zipfile_contents('foo.zip') # => ['foo/foo.exe', 'foo/README.txt']
   def zipfile_contents(path)
-    raw = cmd("unzip -Z1 #{ sh_escape(path) }")
+    raw = cmd('unzip -Z1', path)
     raw.split("\n")
   end
 
@@ -281,7 +280,7 @@ module Maid::Tools
   #
   #     disk_usage('foo.zip') # => 136
   def disk_usage(path)
-    raw = cmd("du -s #{ sh_escape(path) }")
+    raw = cmd('du -s', path)
     # FIXME: This reports in kilobytes, but should probably report in bytes.
     usage_kb = raw.split(/\s+/).first.to_i
    
@@ -346,7 +345,7 @@ module Maid::Tools
   #     git_piston('~/code/projectname')
   def git_piston(path)
     full_path = expand(path)
-    stdout = cmd("cd #{ sh_escape(full_path) } && git pull && git push 2>&1")
+    stdout = Kernel.send(:`, "cd #{ Escape.shell_command(full_path) } && git pull && git push 2>&1")
     log("Fired git piston on #{ full_path.inspect }.  STDOUT:\n\n#{ stdout }")
   end
 
@@ -395,11 +394,11 @@ module Maid::Tools
     ops << '-n' if @file_options[:noop]
 
     Array(options[:exclude]).each do |path|
-      ops << "--exclude=#{ sh_escape(path) }"
+      ops << ['--exclude=', path]
     end
 
     ops << '--delete' if options[:delete]
-    stdout = cmd("rsync #{ ops.join(' ') } #{ sh_escape(from) } #{ sh_escape(to) } 2>&1")
+    stdout = cmd('rsync', ops, from, to) # TODO: } 2>&1")
     log("Fired sync from #{ from.inspect } to #{ to.inspect }.  STDOUT:\n\n#{ stdout }")
   end
 
@@ -411,10 +410,6 @@ module Maid::Tools
 
   def warn(message)
     @logger.warn(message)
-  end
-
-  def sh_escape(string)
-    Shellwords.shellescape(string)
   end
 
   def expand(path)
